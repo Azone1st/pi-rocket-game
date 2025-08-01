@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pi Rocket Multiplayer</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #111; color: white; text-align: center; }
+    #multiplier { font-size: 48px; margin-top: 20px; }
+    .cashout { padding: 10px 30px; font-size: 20px; }
+    table { margin: 20px auto; color: #0f0; }
+  </style>
+</head>
+<body>
+
+<h1>🚀 Pi Rocket Multiplayer</h1>
+<p>Username: <input id="username" /> Bet (Pi): <input id="bet" value="1" /> <button onclick="joinGame()">Join</button></p>
+<div id="multiplier">1.00x</div>
+<button onclick="cashOut()" class="cashout">💸 Cash Out</button>
+
+<h3>🧾 Player List</h3>
+<table id="playerTable" border="1">
+  <thead><tr><th>Name</th><th>Bet</th><th>Result</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  const socket = io();
+  let currentMultiplier = 1.00;
+
+  socket.on('tick', (data) => {
+    currentMultiplier = data.multiplier;
+    document.getElementById("multiplier").innerText = `${data.multiplier}x`;
+  });
+
+  socket.on('crash', (data) => {
+    alert(`🚀 Boom! Crashed at ${data.crashAt}x`);
+  });
+
+  socket.on('players', (players) => {
+    const tbody = document.querySelector("#playerTable tbody");
+    tbody.innerHTML = '';
+    for (const id in players) {
+      const p = players[id];
+      const row = `<tr><td>${p.username}</td><td>${p.bet}</td><td>${p.result || ''}</td></tr>`;
+      tbody.innerHTML += row;
+    }
+  });
+
+  socket.on('results', (players) => {
+    const tbody = document.querySelector("#playerTable tbody");
+    tbody.innerHTML = '';
+    for (const id in players) {
+      const p = players[id];
+      const row = `<tr><td>${p.username}</td><td>${p.bet}</td><td>${p.result || ''}</td></tr>`;
+      tbody.innerHTML += row;
+    }
+  });
+
+  function joinGame() {
+    const username = document.getElementById("username").value;
+    const bet = parseFloat(document.getElementById("bet").value);
+    socket.emit("join", { username, bet });
+  }
+
+  function cashOut() {
+    socket.emit("cashout");
+  }
+</script>
+
+</body>
+</html>
